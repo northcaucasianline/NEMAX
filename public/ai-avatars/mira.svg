@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Портрет mira">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d83f83"/><stop offset="1" stop-color="#ffc0d9"/></linearGradient><radialGradient id="glow"><stop stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-opacity=".25"/></filter></defs>
+<rect width="512" height="512" rx="128" fill="url(#bg)"/>
+<circle cx="385" cy="92" r="120" fill="url(#glow)"/>
+<g filter="url(#shadow)"><path d="M82 512c11-95 73-153 174-153s163 58 174 153z" fill="#fff0f6"/><path d="M191 371c17 38 43 57 65 57s48-19 65-57c-22-12-43-18-65-18s-43 6-65 18z" fill="#f05b9a" opacity=".9"/><path d="M137 254c-8-86 34-151 119-151 84 0 126 65 119 151l-19 87H156z" fill="#4e1735"/>
+<ellipse cx="256" cy="238" rx="100" ry="118" fill="#eab38f"/>
+<path d="M157 223c2-73 42-124 103-124 56 0 99 41 101 112-43-18-73-51-87-91-18 47-57 82-117 103z" fill="#74234c"/>
+<path d="M152 229c-11 52 3 112 31 146-7-53 3-95 23-129zM360 224c13 54 1 113-28 151 6-52-4-95-26-129z" fill="#74234c"/>
+<ellipse cx="218" cy="247" rx="12" ry="9" fill="#2d2430"/><ellipse cx="294" cy="247" rx="12" ry="9" fill="#2d2430"/><circle cx="222" cy="244" r="3" fill="#fff"/><circle cx="298" cy="244" r="3" fill="#fff"/>
+<path d="M245 270c5 7 17 7 22 0" fill="none" stroke="#b97869" stroke-width="5" stroke-linecap="round"/>
+<path d="M220 298c21 18 51 18 72 0" fill="none" stroke="#9f5e62" stroke-width="7" stroke-linecap="round"/>
+<path d="M202 226c11-8 24-10 37-5M273 221c14-5 27-3 38 5" fill="none" stroke="#4e1735" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+</g><circle cx="428" cy="420" r="45" fill="#121020" opacity=".78"/><path d="M408 420h40M428 400v40" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".85"/></svg>

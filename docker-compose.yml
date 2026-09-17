@@ -1,0 +1,200 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: messenger
+      POSTGRES_USER: messenger
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-postgres-password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U messenger"], interval: 5s, timeout: 3s, retries: 20 }
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes: ["redis-data:/data"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-messenger}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change-minio-password}
+    volumes: ["minio-data:/data"]
+    ports: ["9001:9001"]
+    healthcheck: { test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live || exit 1"], interval: 10s, timeout: 5s, retries: 20 }
+    restart: unless-stopped
+
+
+  ai:
+    build: .
+    command: ["node", "server/ai-server.js"]
+    environment:
+      AI_SERVER_PORT: 3005
+      AI_SERVER_HOST: 0.0.0.0
+      AI_PROVIDER: ${AI_PROVIDER:-demo}
+      AI_MODEL: ${AI_MODEL:-local-model}
+      AI_API_BASE_URL: ${AI_API_BASE_URL:-http://host.docker.internal:11434/v1}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_OLLAMA_URL: ${AI_OLLAMA_URL:-http://host.docker.internal:11434}
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-45000}
+      AI_MAX_CONTEXT_MESSAGES: ${AI_MAX_CONTEXT_MESSAGES:-30}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-900}
+      AI_MAX_CONCURRENT: ${AI_MAX_CONCURRENT:-8}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-replace-with-at-least-32-random-characters}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3005/health"], interval: 10s, timeout: 5s, retries: 20 }
+    restart: unless-stopped
+
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    environment:
+      CODE_RUNNER_ENABLED: "true"
+      CODE_RUNNER_PORT: 3003
+      CODE_RUNNER_HOST: 0.0.0.0
+      CODE_RUNNER_SOCKET: /run/nemax-code/runner.sock
+      CODE_RUNNER_TIMEOUT_MS: ${CODE_RUNNER_TIMEOUT_MS:-6000}
+      CODE_RUNNER_MAX_SOURCE_BYTES: ${CODE_RUNNER_MAX_SOURCE_BYTES:-240000}
+      CODE_RUNNER_MAX_OUTPUT_BYTES: ${CODE_RUNNER_MAX_OUTPUT_BYTES:-96000}
+      CODE_RUNNER_DISABLE_NETWORK: "false"
+      CODE_RUNNER_USE_PRLIMIT: "true"
+      CODE_RUNNER_CHILD_UID: 10002
+      CODE_RUNNER_CHILD_GID: 10002
+      CODE_RUNNER_SOCKET_GID: 20000
+    read_only: true
+    network_mode: none
+    volumes:
+      - runner-socket:/run/nemax-code
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop: ["ALL"]
+    cap_add: ["CHOWN", "SETUID", "SETGID"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 96
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck: { test: ["CMD", "node", "-e", "const h=require('http');const r=h.request({socketPath:'/run/nemax-code/runner.sock',path:'/health'},x=>process.exit(x.statusCode===200?0:1));r.on('error',()=>process.exit(1));r.end()"], interval: 10s, timeout: 4s, retries: 15 }
+    restart: unless-stopped
+
+  core:
+    build: .
+    command: ["node", "server/index.js"]
+    environment:
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://messenger:${POSTGRES_PASSWORD:-change-postgres-password}@postgres:5432/messenger
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: messenger-media
+      S3_REGION: us-east-1
+      S3_FORCE_PATH_STYLE: "true"
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-messenger}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-change-minio-password}
+      REALTIME_INTERNAL_URL: http://realtime:3002
+      GAME_SERVER_INTERNAL_URL: http://games:3004
+      AI_SERVER_INTERNAL_URL: http://ai:3005
+      AI_REPLY_TIMEOUT_MS: ${AI_REPLY_TIMEOUT_MS:-55000}
+      AI_MESSAGES_PER_MINUTE: ${AI_MESSAGES_PER_MINUTE:-12}
+      CODE_RUNNER_INTERNAL_URL: http://127.0.0.1:3003
+      CODE_RUNNER_SOCKET: /run/nemax-code/runner.sock
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-replace-with-at-least-32-random-characters}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost,http://localhost:5173,https://localhost}
+      BOOTSTRAP_ADMIN_LOGIN: ${BOOTSTRAP_ADMIN_LOGIN:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-Admin123!ChangeMe}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Главный администратор}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+      REQUIRE_POSTGRES: "true"
+      REQUIRE_REDIS: "true"
+      REQUIRE_S3: "true"
+    volumes:
+      - messenger-keys:/app/server/data
+      - messenger-tmp:/app/server/tmp
+      - runner-socket:/run/nemax-code
+    depends_on:
+      ai: { condition: service_healthy }
+      runner: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/health"], interval: 10s, timeout: 5s, retries: 20 }
+    restart: unless-stopped
+
+  realtime:
+    build: .
+    command: ["node", "server/realtime.js"]
+    environment:
+      REALTIME_PORT: 3002
+      REALTIME_HOST: 0.0.0.0
+      CORE_INTERNAL_URL: http://core:3001
+      REDIS_URL: redis://redis:6379
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-replace-with-at-least-32-random-characters}
+      BACKGROUND_JOB_INTERVAL_MS: 1000
+    depends_on:
+      core: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  games:
+    build: .
+    command: ["node", "server/game-server.js"]
+    environment:
+      GAME_SERVER_PORT: 3004
+      GAME_SERVER_HOST: 0.0.0.0
+      CORE_INTERNAL_URL: http://core:3001
+      REALTIME_INTERNAL_URL: http://realtime:3002
+      GAME_DATABASE_URL: postgresql://messenger:${POSTGRES_PASSWORD:-change-postgres-password}@postgres:5432/messenger
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-replace-with-at-least-32-random-characters}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost,http://localhost:5173,https://localhost}
+      REQUIRE_GAME_POSTGRES: "true"
+      GAME_TICK_MS: 500
+    depends_on:
+      core: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      realtime: { condition: service_started }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3004/health"], interval: 10s, timeout: 5s, retries: 20 }
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn:4.6.2
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    volumes: ["./infra/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro"]
+    ports: ["3478:3478/udp", "3478:3478/tcp", "49160-49200:49160-49200/udp"]
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes: ["./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"]
+    ports: ["80:80"]
+    depends_on: [core, realtime, games]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes: ["./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
+    ports: ["9090:9090"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment: { GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-change-grafana-password}" }
+    volumes: ["grafana-data:/var/lib/grafana", "./infra/grafana/provisioning:/etc/grafana/provisioning:ro"]
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  messenger-keys:
+  messenger-tmp:
+  prometheus-data:
+  grafana-data:
+  runner-socket:

@@ -1,0 +1,14 @@
+{
+  "appId": "app.nemax.community",
+  "appName": "НЕМАКС",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#050415",
+    "captureInput": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

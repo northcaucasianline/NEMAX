@@ -1,0 +1,19 @@
+{
+  "name": "НЕМАКС",
+  "short_name": "NEMAX",
+  "description": "НЕМАКС — мессенджер, новости, комнаты, игры, доски и AI-чаты.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080510",
+  "theme_color": "#8c3dff",
+  "icons": [
+    { "src": "/nemax-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/nemax-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Чаты", "short_name": "Чаты", "url": "/", "icons": [{ "src": "/nemax-icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Комнаты", "short_name": "Комнаты", "url": "/rooms", "icons": [{ "src": "/nemax-icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Игры", "short_name": "Игры", "url": "/games", "icons": [{ "src": "/nemax-icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Доски", "short_name": "Доски", "url": "/boards", "icons": [{ "src": "/nemax-icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

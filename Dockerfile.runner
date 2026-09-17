@@ -1,0 +1,11 @@
+FROM node:22-bookworm-slim
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 openjdk-17-jdk-headless util-linux ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY server/code-runner.js server/internal-service.js ./server/
+RUN groupadd --gid 10002 coder && useradd --create-home --uid 10002 --gid 10002 coder
+ENV NODE_ENV=production CODE_RUNNER_HOST=0.0.0.0 CODE_RUNNER_PORT=3003 CODE_RUNNER_ENABLED=true CODE_RUNNER_USE_PRLIMIT=true CODE_RUNNER_SOCKET=/run/nemax-code/runner.sock
+EXPOSE 3003
+USER root
+CMD ["node", "server/code-runner.js"]

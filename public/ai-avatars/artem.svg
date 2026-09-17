@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Портрет artem">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ce762d"/><stop offset="1" stop-color="#ffd2a1"/></linearGradient><radialGradient id="glow"><stop stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-opacity=".25"/></filter></defs>
+<rect width="512" height="512" rx="128" fill="url(#bg)"/>
+<circle cx="385" cy="92" r="120" fill="url(#glow)"/>
+<g filter="url(#shadow)"><path d="M82 512c11-95 73-153 174-153s163 58 174 153z" fill="#fff2e4"/><path d="M191 371c17 38 43 57 65 57s48-19 65-57c-22-12-43-18-65-18s-43 6-65 18z" fill="#e78b3b" opacity=".9"/><ellipse cx="256" cy="238" rx="100" ry="118" fill="#edbd98"/>
+<path d="M158 218c0-75 38-119 101-119 66 0 104 44 99 124-20-37-52-54-95-54-43 0-77 16-105 49z" fill="#5a321e"/>
+<path d="M159 196c16-65 58-98 112-94 37 3 69 25 87 67-30-18-63-24-99-19-37 5-70 21-100 46z" fill="#392014"/>
+<ellipse cx="218" cy="247" rx="12" ry="9" fill="#2d2430"/><ellipse cx="294" cy="247" rx="12" ry="9" fill="#2d2430"/><circle cx="222" cy="244" r="3" fill="#fff"/><circle cx="298" cy="244" r="3" fill="#fff"/>
+<path d="M245 270c5 7 17 7 22 0" fill="none" stroke="#b97869" stroke-width="5" stroke-linecap="round"/>
+<path d="M220 298c21 18 51 18 72 0" fill="none" stroke="#9f5e62" stroke-width="7" stroke-linecap="round"/>
+<path d="M202 226c11-8 24-10 37-5M273 221c14-5 27-3 38 5" fill="none" stroke="#392014" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+</g><circle cx="428" cy="420" r="45" fill="#121020" opacity=".78"/><path d="M408 420h40M428 400v40" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".85"/></svg>
